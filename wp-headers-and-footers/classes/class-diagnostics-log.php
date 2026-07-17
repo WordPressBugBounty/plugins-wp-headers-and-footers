@@ -75,7 +75,10 @@ if ( ! class_exists( 'WPHeadersAndFooters_Diagnostics_Log' ) ) {
 			$html .= 'Upload Max Filesize:      ' . ini_get( 'upload_max_filesize' ) . $break;
 			$html .= 'Time Limit:               ' . ini_get( 'max_execution_time' ) . $break;
 			$html .= 'Max Input Vars:           ' . ini_get( 'max_input_vars' ) . $break;
-			$html .= 'Display Errors:           ' . ini_get( 'display_errors' ) === 1 ? ini_get( 'display_errors' ) : 'Display Errors: N/A' . $break;
+			$display_errors = ini_get( 'display_errors' );
+			$html          .= 'Display Errors:           '
+				. ( ( $display_errors && '0' !== (string) $display_errors ) ? $display_errors : 'N/A' )
+				. $break;
 
 			// WordPress active themes.
 			$html    .= $break . '-- WordPress Active Theme --' . $break . $break;
@@ -127,30 +130,25 @@ if ( ! class_exists( 'WPHeadersAndFooters_Diagnostics_Log' ) ) {
 			$html .= '</div>';
 			if ( $not_downloadable ) {
 				$html .= '<div class="wpheaderandfooter-log-download-wrap">';
-
-				$html .= '<input type="button" class="button wpheaderandfooter-log-file" value="' . __( 'Download Log File', 'wp-headers-and-footers' ) . '"/>';
+				$html .= '<input type="button" class="button wpheaderandfooter-log-file" value="' . esc_attr__( 'Download Log File', 'wp-headers-and-footers' ) . '"/>';
 				$html .= '<div class="wpheaderandfooter-log-message">';
-				$html .= '<span class="log-file-spinner"><img src="' . admin_url( 'images/wpspin_light.gif' ) . '" /></span>';
-				$html .= '<span class="log-file-text">' . __( 'WP Headers and Footers Log File Downloaded Successfully!', 'wp-headers-and-footers' ) . '</span>';
+				$html .= '<span class="log-file-spinner"><img src="' . esc_url( admin_url( 'images/wpspin_light.gif' ) ) . '" /></span>';
+				$html .= '<span class="log-file-text">' . esc_html__( 'WP Headers and Footers Log File Downloaded Successfully!', 'wp-headers-and-footers' ) . '</span>';
 				$html .= '</div>';
 				$html .= '</div>';
 			}
+
 			return $html;
 		}
 
 		/**
 		 * Get the scripts in the diagnostic log
 		 *
+		 * @param bool   $printable  Whether output is for the admin UI (escape HTML).
+		 * @param string $line_break The break tag / newline definition.
+		 *
 		 * @since 2.1.1
-		 * @return void
-		 */
-		/**
-		 * Get the scripts in the diagnostic log
-		 *
-		 * @param string $printable  The downloadable scripting.
-		 * @param string $line_break The break tag definition.
-		 *
-		 * @return string $html The scripts.
+		 * @return string
 		 */
 		public function wp_headers_and_footers_get_scripts( $printable, $line_break ) {
 
@@ -158,8 +156,8 @@ if ( ! class_exists( 'WPHeadersAndFooters_Diagnostics_Log' ) ) {
 			$html    = '';
 			if ( is_array( $setting ) && ! empty( $setting ) ) {
 				foreach ( $setting as $place_used => $value ) {
-					$key = '- ' . ucfirst( str_replace( array( '_', 'wp', 'textarea' ), '', $place_used ) ) . ' Scripts: -';
-					$value = $printable ? htmlspecialchars( $value ) : $value;
+					$key   = '- ' . ucfirst( str_replace( array( '_', 'wp', 'textarea' ), '', $place_used ) ) . ' Scripts: -';
+					$value = $printable ? esc_html( (string) $value ) : (string) $value;
 					$html .= $line_break . $key . $line_break . $line_break;
 					$html .= '<code>' . $value . '</code>' . $line_break;
 				}

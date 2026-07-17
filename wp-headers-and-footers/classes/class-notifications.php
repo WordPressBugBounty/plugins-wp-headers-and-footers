@@ -121,15 +121,15 @@ if ( ! class_exists( 'WPHeaderAndFooter_Notification' ) ) :
 			$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? esc_url_raw( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '';
 			$scheme      = ( wp_parse_url( $request_uri, PHP_URL_QUERY ) ) ? '&' : '?';
 			// Update the wpheaderandfooter_review_dismiss value in 2.1.0
-			$url         = esc_url_raw( wp_unslash( $_SERVER['REQUEST_URI'] ) ) . $scheme . 'wpheaderandfooter_review_dismiss=yes_v2_1_0';
+			$url         = $request_uri . $scheme . 'wpheaderandfooter_review_dismiss=yes_v2_1_0';
 			$dismiss_url = wp_nonce_url( $url, 'wpheaderandfooter-review-nonce' );
 
-			$_later_link = esc_url_raw( wp_unslash( $_SERVER['REQUEST_URI'] ) ) . $scheme . 'wpheaderandfooter_review_later=yes';
+			$_later_link = $request_uri . $scheme . 'wpheaderandfooter_review_later=yes';
 			$later_url   = wp_nonce_url( $_later_link, 'wpheaderandfooter-review-nonce' ); ?>
 
 			<div class="wpheaderandfooter-review-notice">
 				<div class="wpheaderandfooter-review-thumbnail">
-					<img src="<?php echo esc_url( plugins_url( '../asset/img/icon-128x128.png', __FILE__ ) ); ?>" alt="Inline Headers And Footers Logo">
+					<img src="<?php echo esc_url( plugins_url( '../asset/img/logo.png', __FILE__ ) ); ?>" alt="Inline Headers And Footers Logo">
 				</div>
 				<div class="wpheaderandfooter-review-text">
 					<h3><?php esc_html_e( 'Leave A Review?', 'wp-headers-and-footers' ); ?></h3>

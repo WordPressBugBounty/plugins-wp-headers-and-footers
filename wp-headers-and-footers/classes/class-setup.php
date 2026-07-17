@@ -92,7 +92,9 @@ if ( ! class_exists( 'WPHeaderAndFooter_Setting' ) ) :
 		function load_default_settings() {
 
 			$settings      = get_option( 'wpheaderandfooter_settings' );
-			$factory_reset = isset( $settings['factory_reset_settings'] ) ? $settings['factory_reset_settings'] : 'off';
+			$factory_reset = ( is_array( $settings ) && isset( $settings['factory_reset_settings'] ) )
+				? $settings['factory_reset_settings']
+				: 'off';
 
 			if ( 'on' === $factory_reset ) {
 				if ( get_option( 'wpheaderandfooter_settings' ) ) {
@@ -237,7 +239,7 @@ if ( ! class_exists( 'WPHeaderAndFooter_Setting' ) ) :
 		 * @version 3.1.3
 		 */
 		public function wp_header_and_footer_callback() {
-			echo $this::wp_hnf_admin_page_header();
+			echo self::wp_hnf_admin_page_header();
 
 			echo '<div class="wrap wp-headers-and-footers">';
 			echo '<h1 style="display:none;">' . esc_html__( 'Insert Headers And Footers', 'wp-headers-and-footers' ) . '</h1>';
@@ -276,7 +278,7 @@ if ( ! class_exists( 'WPHeaderAndFooter_Setting' ) ) :
 			<div class="wp_hnf-header-wrapper">
 				<div class="wp_hnf-header-container">
 					<div class="wp_hnf-header-logo">
-						<a href="<?php echo esc_url( 'https://wpbrigade.com' ); ?>" target="_blank"><img src="<?php echo esc_url( WPHEADERANDFOOTER_DIR_URL . 'asset/img/logo.svg' ); ?>"></a>
+						<a href="<?php echo esc_url( 'https://wpbrigade.com' ); ?>" target="_blank"><img style="width: 80px;" src="<?php echo esc_url( WPHEADERANDFOOTER_DIR_URL . 'asset/img/logo.png' ); ?>"></a>
 					</div>
 					<div class="wp_hnf-header-cta">
 					<a href="#" id="wpheaderandfooter_diagnostic_log-header">

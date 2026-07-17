@@ -4,7 +4,7 @@
  * Plugin Name: WP Headers And Footers
  * Plugin URI: https://www.WPBrigade.com/wordpress/plugins/wp-headers-and-footers/?utm_source=?utm_source=wp-headers-and-footers&utm_medium=author-uri-link
  * Description: Allows you to insert code or text in the header or footer of your WordPress site.
- * Version: 3.1.4
+ * Version: 3.1.5
  * Author: WPBrigade
  * Author URI: https://wpbrigade.com/?utm_source=wp-headers-and-footers&utm_medium=author-uri-link
  * License: GPLv3
@@ -18,32 +18,66 @@
  */
 
 if ( ! function_exists( 'whaf_wpb56690683' ) ) {
-	// Create a helper function for easy SDK access.
+	/**
+	 * Create a helper function for easy SDK access.
+	 *
+	 * @return mixed
+	 */
 	function whaf_wpb56690683() {
 		global $whaf_wpb56690683;
 
-		if ( ! isset( $whaf_wpb56690683 ) ) {
-			// Include Telemetry SDK.
+		if ( ! isset( $whaf_wpb56690683 ) || ! is_array( $whaf_wpb56690683 ) ) {
 			require_once __DIR__ . '/lib/wpb-sdk/start.php';
 
-			$whaf_wpb56690683 = wpb_dynamic_init(
+			/**
+			 * Initialize WPB SDK.
+			 *
+			 * @phpstan-ignore-next-line
+			 */
+			$whaf_wpb56690683 = wpb_sdk_dynamic_init(
 				array(
-					'id'             => '2',
-					'slug'           => 'wp-headers-and-footers',
-					'type'           => 'plugin',
-					'public_key'     => '1|4aOA8EuyIN4pi2miMvC23LLpnHbBZFNki9R9pVmwd673d3c8',
-					'secret_key'     => 'sk_b36c525848fee035',
-					'is_premium'     => false,
-					'has_addons'     => false,
-					'has_paid_plans' => false,
-					'menu'           => array(
+					'id'              => '2',
+					'slug'            => 'wp-headers-and-footers',
+					'type'            => 'plugin',
+					'plugin_file'     => __FILE__,
+					'sdk_views_dir'   => __DIR__ . '/lib/wpb-sdk/views',
+					'public_key'      => '1|4aOA8EuyIN4pi2miMvC23LLpnHbBZFNki9R9pVmwd673d3c8',
+					'secret_key'      => 'sk_b36c525848fee035',
+					'is_premium'      => false,
+					'has_addons'      => false,
+					'has_paid_plans'  => false,
+					'optin_user_meta' => array(
+						'token'          => '_wpheaderandfooter_verification_token',
+						'email_verified' => '_wpheaderandfooter_email_verified',
+					),
+					'optin'           => array(
+						'option_name'         => '_wpheaderandfooter_optin',
+						'optin_page'          => 'wpheadersandfooters-optin',
+						'settings_page'       => 'wp-headers-and-footers',
+						'verify_query_args'   => array(
+							'wp-headers-and-footers_optin_verify',
+							'wp_headers_and_footers_optin_verify',
+						),
+						'ajax_prefix'         => 'whaf',
+						'product_name'        => 'WP Headers And Footers',
+						'logo_path'           => 'asset/img/logo.svg',
+						'settings_admin_path' => 'options-general.php?page=wp-headers-and-footers',
+					),
+					'telemetry'       => array(
+						'optout_submit_key' => 'whaf-submit-optout',
+					),
+					'menu'            => array(
 						'slug'    => 'wp-headers-and-footers',
 						'account' => false,
 						'support' => false,
 					),
-					'settings'       => array(
-						'wpheaderandfooter_settings' => '',
-						'_wpheaderandfooter_optin'   => '',
+					'settings'        => array(
+						'wpheaderandfooter_settings'                         => '',
+						'wpheaderandfooter_basics'                           => '',
+						'_wpheaderandfooter_optin'                           => '',
+						'wpb_sdk_wp-headers-and-footers'                     => '',
+						'wpb_sdk_wp-headers-and-footers_fallback_verify_token' => '',
+						'wpb_sdk_wp-headers-and-footers_initial_log_sent'      => '',
 					),
 				)
 			);
@@ -52,9 +86,7 @@ if ( ! function_exists( 'whaf_wpb56690683' ) ) {
 		return $whaf_wpb56690683;
 	}
 
-	// Init Telemetry.
 	whaf_wpb56690683();
-	// Signal that SDK was initiated.
 	do_action( 'whaf_wpb56690683_loaded' );
 }
 
@@ -70,7 +102,7 @@ if ( ! class_exists( 'WPHeaderAndFooter' ) ) :
 		 *
 		 * @var string $version
 		 */
-		public $version = '3.1.4';
+		public $version = '3.1.5';
 
 		/**
 		 * The single instance of the class.
@@ -105,12 +137,19 @@ if ( ! class_exists( 'WPHeaderAndFooter' ) ) :
 			if ( ! get_option( 'wpheaderandfooter_basics_logger' ) ) {
 
 				$setting = get_option( 'wpheaderandfooter_basics' );
+				if ( ! is_array( $setting ) ) {
+					$setting = array();
+				}
 
-				$logger_value = array();
+				$header = isset( $setting['wp_header_textarea'] ) ? (string) $setting['wp_header_textarea'] : '';
+				$body   = isset( $setting['wp_body_textarea'] ) ? (string) $setting['wp_body_textarea'] : '';
+				$footer = isset( $setting['wp_footer_textarea'] ) ? (string) $setting['wp_footer_textarea'] : '';
 
-				$logger_value['is_using_wp_header_textarea'] = isset( $setting['wp_header_textarea'] ) && ! empty( trim( $setting['wp_header_textarea'] ) ) ? true : false;
-				$logger_value['is_using_wp_body_textarea']   = isset( $setting['wp_body_textarea'] ) && ! empty( trim( $setting['wp_body_textarea'] ) ) ? true : false;
-				$logger_value['is_using_wp_footer_textarea'] = isset( $setting['wp_footer_textarea'] ) && ! empty( trim( $setting['wp_footer_textarea'] ) ) ? true : false;
+				$logger_value = array(
+					'is_using_wp_header_textarea' => '' !== trim( $header ),
+					'is_using_wp_body_textarea'   => '' !== trim( $body ),
+					'is_using_wp_footer_textarea' => '' !== trim( $footer ),
+				);
 
 				update_option( 'wpheaderandfooter_basics_logger', $logger_value );
 			}
@@ -156,9 +195,7 @@ if ( ! class_exists( 'WPHeaderAndFooter' ) ) :
 
 			add_action( 'wp_ajax_wpheadersandfooters_log_download', array( $this, 'wp_headers_and_footers_log_download' ) );
 			add_action( 'wp_wpb_sdk_after_uninstall', array( $this, 'plugin_uninstallation' ) );
-			add_action( 'admin_footer', array( $this, 'add_deactivate_modal' ) );
-			add_action( 'admin_menu', array( $this, 'register_wpheaders_optin_page' ) );
-			add_action( 'wp_ajax_wpheadersandfooters_optout_yes', array( $this, 'optout_yes' ) );
+			add_action( 'admin_menu', array( $this, 'register_wpheaders_optin_page' ), 20 );
 
 		}
 
@@ -167,122 +204,73 @@ if ( ! class_exists( 'WPHeaderAndFooter' ) ) :
 		 *
 		 * @since 2.2.3
 		 */
-		function register_wpheaders_optin_page() {
-			add_submenu_page( 'HeaderandFooter', __( 'Activate', 'wp-headers-and-footers' ), __( 'Activate', 'wp-headers-and-footers' ), 'manage_options', 'wpheadersandfooters-optin', array( $this, 'wpheadersandfooters_render_optin_page' ) );
-		}
-
 		/**
-		 * Summary of register_wpheaders_optin_page
+		 * Hidden opt-in page (registered after Settings → WP Headers and Footers menu).
 		 *
 		 * @since 2.2.3
 		 */
-		function wpheadersandfooters_render_optin_page() {
-			include plugin_dir_path( __FILE__ ) . 'inc/hnf-optin-form.php';
+		public function register_wpheaders_optin_page() {
+			add_menu_page(
+				__( 'Activate', 'wp-headers-and-footers' ),
+				' ',
+				'manage_options',
+				'wpheadersandfooters-optin',
+				array( $this, 'wpheadersandfooters_render_optin_page' ),
+				'',
+				null
+			);
+			remove_menu_page( 'wpheadersandfooters-optin' );
 		}
 
 		/**
-		 * Summary of register_wpheaders_optin_page
+		 * Opt-in screen.
 		 *
 		 * @since 2.2.3
 		 */
-		function add_deactivate_modal() {
-			global $pagenow;
+		public function wpheadersandfooters_render_optin_page() {
+			if ( function_exists( 'wpb_sdk_render_optin_form' ) ) {
+				wpb_sdk_render_optin_form( 'wp-headers-and-footers' );
+			}
+		}
 
-			if ( 'plugins.php' !== $pagenow ) {
+		/**
+		 * Redirect to opt-in before settings; leave opt-in when already decided.
+		 *
+		 * @since 1.6.3
+		 */
+		public function redirect_optin() {
+			if ( ! current_user_can( 'manage_options' ) ) {
 				return;
 			}
 
-			include plugin_dir_path( __FILE__ ) . 'inc/hnf-optout-form.php';
-		}
+			$page = isset( $_GET['page'] ) ? sanitize_text_field( wp_unslash( (string) $_GET['page'] ) ) : '';
+			$decision = function_exists( 'wpb_sdk_get_optin_decision' )
+				? wpb_sdk_get_optin_decision( 'wp-headers-and-footers' )
+				: (string) get_option( '_wpheaderandfooter_optin', '' );
 
-		/**
-		 * Opt-out
-		 *
-		 * @since 2.2.3
-		 * @version 3.1.3
-		 */
-		function optout_yes() {
-
-			if( ! current_user_can( 'manage_options' ) || ! check_ajax_referer( 'headerandfooter-optout-nonce', 'optout_nonce' ) ){
-				wp_die(
-					'<p>' . esc_html__( 'Sorry, you are not allowed to edit this item.', 'wp-headers-and-footers' ) . '</p>',
-					403
+			if (
+				$page
+				&& in_array( $page, array( 'wp-headers-and-footers', 'abw' ), true )
+				&& '' === $decision
+			) {
+				wp_safe_redirect(
+					admin_url(
+						'admin.php?page=wpheadersandfooters-optin&redirect-page=' . rawurlencode( $page )
+					)
 				);
+				exit;
 			}
 
-			// Get the current option and decode it as an associative array
-			$sdk_data = json_decode( get_option( 'wpb_sdk_wp-headers-and-footers' ), true );
-
-			// If there is no current option, initialize an empty array
-			if ( ! $sdk_data ) {
-				$sdk_data = array();
-			}
-
-			$setting_name  = isset( $_POST['setting_name'] ) ? sanitize_text_field( wp_unslash( $_POST['setting_name'] ) ) : '';  // e.g., communication, diagnostic_info, extensions
-			$setting_value = isset( $_POST['setting_value'] ) ? sanitize_text_field( wp_unslash( $_POST['setting_value'] ) ) : '';  // The new value to be updated
-
-			// Update the specific setting in the array
-			$sdk_data[ $setting_name ] = $setting_value;
-
-			// Encode the array back into a JSON string and update the option
-			update_option( 'wpb_sdk_wp-headers-and-footers', json_encode( $sdk_data ) );
-
-			wp_die();
-		}
-
-		/**
-		 * Summary of register_wpheaders_optin_page
-		 *
-		 * @since 2.2.3
-		 */
-		function redirect_optin() {
-
-			/**
-			 * Fix the Broken Access Control (BAC) security fix.
-			 *
-			 * @since 1.6.3
-			 * @version 3.1.3
-			 */
-			if ( current_user_can( 'manage_options' ) ) {
-				if ( isset( $_POST['headerandfooter-submit-optout'] ) ) {
-					if ( ! isset( $_POST['headerandfooter_submit_optin_nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['headerandfooter_submit_optin_nonce'] ) ), 'headerandfooter_submit_optin_nonce' ) ) {
-						return;
-					}
-					update_option( '_wpheaderandfooter_optin', 'no' );
-					// Retrieve WPB SDK existing option and set user_skip
-					$sdk_data              = json_decode( get_option( 'wpb_sdk_wp-headers-and-footers' ), true );
-					$sdk_data['user_skip'] = '1';
-					$sdk_data_json         = json_encode( $sdk_data );
-					update_option( 'wpb_sdk_wp-headers-and-footers', $sdk_data_json );
-				} elseif ( isset( $_POST['headerandfooter-submit-optin'] ) ) {
-					if ( ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['headerandfooter_submit_optin_nonce'] ) ), 'headerandfooter_submit_optin_nonce' ) ) {
-						return;
-					}
-					update_option( '_wpheaderandfooter_optin', 'yes' );
-					// WPB SDK OPT IN OPTIONS
-					$sdk_data      = array(
-						'communication'   => '1',
-						'diagnostic_info' => '1',
-						'extensions'      => '1',
-						'user_skip'       => '0',
-					);
-					$sdk_data_json = json_encode( $sdk_data );
-					update_option( 'wpb_sdk_wp-headers-and-footers', $sdk_data_json );
-				} elseif ( ! get_option( '_wpheaderandfooter_optin' ) && isset( $_GET['page'] ) && ( $_GET['page'] === 'wp-headers-and-footers' || $_GET['page'] === 'wp-headers-and-footers' || $_GET['page'] === 'abw' ) ) {
-
-					/**
-					 * XSS Attack vector found and fixed.
-					 *
-					 * @since 1.5.11
-					 */
-					$page_redirect = $_GET['page'] === 'wp-headers-and-footers' ? 'wp-headers-and-footers' : 'wp-headers-and-footers';
-					wp_redirect( admin_url( 'admin.php?page=wpheadersandfooters-optin&redirect-page=' . $page_redirect ) );
-					exit;
-
-				} elseif ( get_option( '_wpheaderandfooter_optin' ) && ( get_option( '_wpheaderandfooter_optin' ) == 'yes' ) && isset( $_GET['page'] ) && $_GET['page'] === 'wpheadersandfooters-optin' ) {
-					wp_redirect( admin_url( 'options-general.php?page=wp-headers-and-footers' ) );
-					exit;
-				}
+			if (
+				(
+					function_exists( 'wpb_sdk_should_redirect_from_optin_page' )
+						? wpb_sdk_should_redirect_from_optin_page( 'wp-headers-and-footers' )
+						: ( 'yes' === $decision )
+				)
+				&& 'wpheadersandfooters-optin' === $page
+			) {
+				wp_safe_redirect( admin_url( 'options-general.php?page=wp-headers-and-footers' ) );
+				exit;
 			}
 		}
 
@@ -292,7 +280,10 @@ if ( ! class_exists( 'WPHeaderAndFooter' ) ) :
 		 * @since 2.2.2
 		 * @version 2.2.3
 		 */
-		public function plugin_uninstallation() {
+		public function plugin_uninstallation( $slug = '' ) {
+			if ( 'wp-headers-and-footers' !== $slug ) {
+				return;
+			}
 			include_once WPHEADERANDFOOTER_DIR_PATH . 'inc/uninstall.php';
 		}
 
@@ -307,6 +298,7 @@ if ( ! class_exists( 'WPHeaderAndFooter' ) ) :
 			$this->define( 'WPHEADERANDFOOTER_ROOT_PATH', __DIR__ . '/' );
 			$this->define( 'WPHEADERANDFOOTER_VERSION', $this->version );
 			$this->define( 'WPHEADERANDFOOTER_FEEDBACK_SERVER', 'https://wpbrigade.com/' );
+			$this->define( 'WPHEADERANDFOOTER_WPB_SDK_VIEWS_DIR', WPHEADERANDFOOTER_DIR_PATH . 'lib/wpb-sdk/views/' );
 		}
 
 		/**
@@ -321,7 +313,7 @@ if ( ! class_exists( 'WPHeaderAndFooter' ) ) :
 		public function hnf_option( $option_name, $index, $default = '' ) {
 
 			$option = get_option( $option_name );
-			if ( isset( $option[ $index ] ) && ! empty( $option[ $index ] ) ) {
+			if ( is_array( $option ) && isset( $option[ $index ] ) && ! empty( $option[ $index ] ) ) {
 				return $option[ $index ];
 			}
 			return $default;
@@ -379,9 +371,6 @@ if ( ! class_exists( 'WPHeaderAndFooter' ) ) :
 			}
 		}
 
-		function render_optin() {
-			include headerandfooter_DIR_PATH . 'inc/hnf-optin-form.php';
-		}
 		/**
 		 * Main Instance
 		 *
@@ -482,7 +471,7 @@ if ( ! class_exists( 'WPHeaderAndFooter' ) ) :
 			// Get meta.
 			$meta = $this->hnf_option( 'wpheaderandfooter_basics', $script, false );
 
-			if ( '' === trim( $meta ) || ! $meta ) :
+			if ( false === $meta || '' === trim( (string) $meta ) ) :
 				return;
 			endif;
 

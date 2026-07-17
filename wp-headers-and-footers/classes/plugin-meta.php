@@ -24,7 +24,6 @@ if (! class_exists('WPHeaderAndFooter_Plugin_Meta')) :
 		{
 
 			add_filter('plugin_row_meta', array($this, 'row_meta'), 10, 2);
-			add_action('plugin_action_links', array($this, 'action_links'), 10, 2);
 		}
 
 		/**
@@ -60,51 +59,6 @@ if (! class_exists('WPHeaderAndFooter_Plugin_Meta')) :
 			$meta_fields[] = "<a href='" . esc_url($plugin_rate) . "' target='_blank' title='" . esc_html__('Rate', 'wp-headers-and-footers') . "'><i class='wp-headers-and-footers-rate-stars'>" . $svg_icon . '</i></a>';
 
 			return $meta_fields;
-		}
-
-		/**
-		 * Add a link to the settings page to the plugins list
-		 *
-		 * @param URL    $links the action link.
-		 * @param string $file the file name.
-		 * @since  1.2.1
-		 * @version 3.1.3
-		 */
-		public function action_links($links, $file)
-		{
-
-			static $this_plugin;
-
-			if (empty($this_plugin)) {
-
-				$this_plugin = 'wp-headers-and-footers/wp-headers-and-footers.php';
-			}
-
-			if ($file === $this_plugin) {
-				/* Translators: Settings tab */
-				$settings_link = sprintf(esc_html__('%1$s Settings %2$s', 'wp-headers-and-footers'), '<a href="' . admin_url('options-general.php?page=wp-headers-and-footers') . '">', '</a>');
-				
-				$sdk_data = json_decode(get_option('wpb_sdk_wp-headers-and-footers'), true);
-				// Initialize the options or set defaults if not found
-				$communication   = isset($sdk_data['communication']) ? $sdk_data['communication'] : '0';
-				$diagnostic_info = isset($sdk_data['diagnostic_info']) ? $sdk_data['diagnostic_info'] : '0';
-				$extensions      = isset($sdk_data['extensions']) ? $sdk_data['extensions'] : '0';
-
-				// Check if any option is set to '1' and build the settings link
-				if ('1' == $communication || '1' == $diagnostic_info || '1' == $extensions) {
-					/* Translators: Opt Out */
-					$settings_link .= sprintf(esc_html__('|  %1$s Opt Out %2$s ', 'wp-headers-and-footers'), '<a class="opt-out" href="' . admin_url('options-general.php?page=wp-headers-and-footers') . '">', '</a>');
-				} else {
-                    if('yes' == get_option( '_wpheaderandfooter_optin' )) {
-                        update_option('_wpheaderandfooter_optin', 'no');
-                    }
-					/* Translators: Opt In */
-					$settings_link .= sprintf(esc_html__('|  %1$s Opt In %2$s ', 'wp-headers-and-footers'),'<a href="' . admin_url('admin.php?page=wpheadersandfooters-optin') . '">','</a>');
-				}
-				array_unshift($links, $settings_link);
-			}
-
-			return $links;
 		}
 	}
 endif;
